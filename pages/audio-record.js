@@ -1,66 +1,158 @@
-// pages/api/transcribe.js
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/router';
 
-import formidable from 'formidable';
-import fs from 'fs';
-import { IncomingForm } from 'formidable';
+export default function AudioRecord() {
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState('');
+  const [transcription, setTranscription] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const router = useRouter();
 
-export const config = {
-  api: {
-    bodyParser: false, // We disable Next.js' default body parsing so formidable can handle it
-  },
-};
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-
-  // Parse the incoming form with formidable
-  const form = new IncomingForm();
-
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error('Error parsing form:', err);
-      res.status(500).json({ error: 'Error parsing form data' });
-      return;
-    }
-
-    // Access the uploaded file (the field name should match what we appended in the client)
-    const audioFile = files.audio;
-    if (!audioFile) {
-      res.status(400).json({ error: 'No audio file uploaded' });
-      return;
-    }
-
+  const startRecording = async () => {
     try {
-      // Create a FormData object to send to OpenAI
-      // (Node 18+ supports the standard FormData; if not, you may need to install the "form-data" package)
-      const formData = new FormData();
-      // Append the file. Note: audioFile.filepath contains the path to the temp file.
-      formData.append('file', fs.createReadStream(audioFile.filepath), {
-        filename: audioFile.originalFilename || 'recording.webm',
-      });
-      formData.append('model', 'whisper-1');
-      // Optionally, you could add a language or prompt here.
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported');
+      }
 
-      const openaiResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          // Note: Do not set the Content-Type header manually here;
-          // the browser/node will set the correct multipart/form-data boundary.
-        },
-        body: formData,
-      });
+      const constraints = { audio: true, video: false };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
 
-      const data = await openaiResponse.json();
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-      // Return the transcription data (or error information) back to the client
-      res.status(openaiResponse.ok ? 200 : openaiResponse.status).json(data);
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/mpeg'
+        });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
+
+        // Create a new FormData with the correct filename and type
+        setIsTranscribing(true);
+        try {
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.webm');
+          const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+          console.log('Transcription response:', data);
+          if (data.text) {
+            setTranscription(data.text);
+            console.log('Setting transcription:', data.text);
+          } else {
+            console.error('No transcription text in response');
+          }
+        } catch (error) {
+          console.error('Transcription error:', error);
+          alert('Error transcribing audio');
+        }
+        setIsTranscribing(false);
+      };
+
+      mediaRecorderRef.current.start(10);
+      setIsRecording(true);
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      res.status(500).json({ error: 'Error calling OpenAI transcription API' });
+      console.error('Error accessing microphone:', error);
+      alert('Error accessing microphone. Please ensure you have granted permission.');
     }
-  });
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const handleSubmit = () => {
+    router.push('/feedback');
+  };
+
+  return (
+    <div style={styles.container}>
+      <h1>Audio Recording</h1>
+
+      <div style={styles.controls}>
+        {!isRecording ? (
+          <button onClick={startRecording} style={{...styles.button, backgroundColor: '#4CAF50'}}>
+            Start Recording
+          </button>
+        ) : (
+          <button onClick={stopRecording} style={{...styles.button, backgroundColor: '#ff4444'}}>
+            Stop Recording
+          </button>
+        )}
+      </div>
+
+      {audioURL && (
+        <div style={styles.audioPreview}>
+          <audio src={audioURL} controls />
+          {isTranscribing ? (
+            <div>Transcribing...</div>
+          ) : transcription && (
+            <div style={styles.transcription}>
+              <h3>Transcription:</h3>
+              <p>{transcription}</p>
+            </div>
+          )}
+          <button onClick={handleSubmit} style={styles.submitButton}>
+            Use Recording
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
+
+const styles = {
+  container: {
+    maxWidth: '600px',
+    margin: '2rem auto',
+    padding: '1rem',
+    textAlign: 'center',
+  },
+  controls: {
+    marginBottom: '2rem',
+  },
+  button: {
+    padding: '1rem 2rem',
+    fontSize: '1.2rem',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+  audioPreview: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  submitButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#0070f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+  transcription: {
+    textAlign: 'left',
+    width: '100%',
+    padding: '1rem',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '4px',
+  }
+};
