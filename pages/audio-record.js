@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 
 export default function AudioRecord() {
@@ -11,29 +10,16 @@ export default function AudioRecord() {
   const audioChunksRef = useRef([]);
   const router = useRouter();
 
-  useEffect(() => {
-    startRecording();
-  }, []);
-
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Media devices not supported');
       }
 
-      const constraints = { 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100
-        }
-      };
+      const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 128000
-      });
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -43,24 +29,27 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/mpeg'
+        });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
+        // Create a new FormData with the correct filename and type
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm;codecs=opus' });
-          formData.append('audio', file);
-
+          formData.append('audio', audioBlob, 'recording.webm');
           const response = await fetch('/api/transcribe', {
             method: 'POST',
             body: formData,
           });
 
           const data = await response.json();
+          console.log('Transcription response:', data);
           if (data.text) {
             setTranscription(data.text);
+            console.log('Setting transcription:', data.text);
           } else {
             console.error('No transcription text in response');
           }
@@ -93,12 +82,18 @@ export default function AudioRecord() {
 
   return (
     <div style={styles.container}>
-      <h1>Recording in Progress...</h1>
+      <h1>Audio Recording</h1>
 
       <div style={styles.controls}>
-        <button onClick={stopRecording} style={{...styles.button, backgroundColor: '#ff4444'}}>
-          Stop Recording
-        </button>
+        {!isRecording ? (
+          <button onClick={startRecording} style={{...styles.button, backgroundColor: '#4CAF50'}}>
+            Start Recording
+          </button>
+        ) : (
+          <button onClick={stopRecording} style={{...styles.button, backgroundColor: '#ff4444'}}>
+            Stop Recording
+          </button>
+        )}
       </div>
 
       {audioURL && (
