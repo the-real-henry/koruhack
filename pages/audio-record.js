@@ -13,30 +13,13 @@ export default function AudioRecord() {
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Your browser does not support audio recording');
-        return;
+        throw new Error('Media devices not supported');
       }
 
-      // First check if we have permission
-      const permissionResult = await navigator.permissions.query({ name: 'microphone' });
-      if (permissionResult.state === 'denied') {
-        alert('Please enable microphone access in your browser settings');
-        return;
-      }
-
-      const constraints = { 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100
-        }
-      };
+      const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 128000
-      });
+      
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -47,32 +30,32 @@ export default function AudioRecord() {
 
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm;codecs=opus'
+          type: 'audio/mpeg'
         });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
-        // Create a FormData and send to API
+        // Create a new FormData with the correct filename and type
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm;codecs=opus' });
-          formData.append('audio', file);
-
+          formData.append('audio', audioBlob, 'recording.webm');
           const response = await fetch('/api/transcribe', {
             method: 'POST',
-            body: formData
+            body: formData,
           });
 
           const data = await response.json();
+          console.log('Transcription response:', data);
           if (data.text) {
             setTranscription(data.text);
+            console.log('Setting transcription:', data.text);
           } else {
-            throw new Error(data.error || 'Transcription failed');
+            console.error('No transcription text in response');
           }
         } catch (error) {
           console.error('Transcription error:', error);
-          alert('Error transcribing audio: ' + error.message);
+          alert('Error transcribing audio');
         }
         setIsTranscribing(false);
       };
