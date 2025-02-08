@@ -16,14 +16,10 @@ export default function AudioRecord() {
         throw new Error('Media devices not supported');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true
-      });
+      const constraints = { audio: true, video: false };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      const mimeType = 'audio/webm';
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: mimeType
-      });
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -31,7 +27,7 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
