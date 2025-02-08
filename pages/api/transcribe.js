@@ -45,18 +45,10 @@ export default async function handler(req, res) {
       response_format: "text"
     });
 
-    return res.status(200).json({ text: transcription });
-
-    console.log('Transcription result:', transcription);
-
-    console.log('OpenAI response:', transcription);
-
     // Clean up the temporary file
     fs.unlinkSync(files.audio.filepath);
 
-    const response = { text: transcription.text };
-    console.log('Sending response:', response);
-    res.status(200).json(response);
+    return res.status(200).json({ text: transcription });
   } catch (error) {
     console.error('Error processing audio:', error.message);
     res.status(500).json({ error: error.message });

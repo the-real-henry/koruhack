@@ -33,7 +33,7 @@ export default function AudioRecord() {
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
+          formData.append('audio', audioBlob, 'recording.wav');
           const response = await fetch('/api/transcribe', {
             method: 'POST',
             body: formData,
