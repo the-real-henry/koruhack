@@ -15,9 +15,7 @@ export default function AudioRecord() {
       const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/wav'
-      });
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -28,7 +26,7 @@ export default function AudioRecord() {
 
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/wav'
+          type: 'audio/webm'
         });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
