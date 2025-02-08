@@ -18,7 +18,7 @@ export default function AudioRecord() {
 
       const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
+
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -39,44 +39,23 @@ export default function AudioRecord() {
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
+          const audioFile = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
+          formData.append('audio', audioFile);
+
           const response = await fetch('/api/transcribe', {
             method: 'POST',
-            body: formData,
+            body: formData
           });
 
           const data = await response.json();
-          console.log('Transcription response:', data);
           if (data.text) {
             setTranscription(data.text);
-            console.log('Setting transcription:', data.text);
           } else {
-            console.error('No transcription text in response');
+            throw new Error(data.error || 'Transcription failed');
           }
         } catch (error) {
           console.error('Transcription error:', error);
-          alert('Error transcribing audio');
-        }
-        // Create a FormData and send to API
-        const formData = new FormData();
-        // Create a File object from the Blob with a specific filename
-        const audioFile = new File([audioBlob], 'audio.webm', { type: audioBlob.type });
-        formData.append('audio', audioFile);
-
-        try {
-          setIsTranscribing(true);
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          const data = await response.json();
-          console.log('Transcription result:', data);
-          if (data.text) {
-            setTranscription(data.text);
-          }
-        } catch (error) {
-          console.error('Transcription error:', error);
+          alert('Error transcribing audio: ' + error.message);
         }
         setIsTranscribing(false);
       };

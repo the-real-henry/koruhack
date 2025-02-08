@@ -1,10 +1,11 @@
-import formidable from 'formidable';
+
 import { OpenAI } from 'openai';
+import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 };
 
 export default async function handler(req, res) {
@@ -15,32 +16,26 @@ export default async function handler(req, res) {
   const form = formidable();
 
   try {
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        resolve([fields, files]);
-      });
-    });
+    const [_, files] = await form.parse(req);
+    const audioFile = files.audio?.[0];
+
+    if (!audioFile) {
+      throw new Error('No audio file received');
+    }
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    if (!files.audio) {
-      throw new Error('No audio file received');
-    }
-
-    console.log('Processing audio file:', files.audio);
     const transcription = await openai.audio.transcriptions.create({
-      file: files.audio,
+      file: fs.createReadStream(audioFile.filepath),
       model: "whisper-1",
       language: "en"
     });
 
-    console.log('OpenAI response:', transcription);
     res.status(200).json({ text: transcription.text });
   } catch (error) {
-    console.error('Error processing audio:', error.message);
+    console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
 }
