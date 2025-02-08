@@ -44,8 +44,6 @@ export default function AudioRecord() {
   };
 
   const handleSubmit = () => {
-    // Here you would typically upload the audio file
-    // For now, we'll just return to the feedback page
     router.push('/feedback');
   };
 
@@ -55,11 +53,11 @@ export default function AudioRecord() {
       
       <div style={styles.controls}>
         {!isRecording ? (
-          <button onClick={startRecording} style={styles.button}>
+          <button onClick={startRecording} style={{...styles.button, backgroundColor: '#4CAF50'}}>
             Start Recording
           </button>
         ) : (
-          <button onClick={stopRecording} style={styles.button}>
+          <button onClick={stopRecording} style={{...styles.button, backgroundColor: '#ff4444'}}>
             Stop Recording
           </button>
         )}
@@ -90,7 +88,6 @@ const styles = {
   button: {
     padding: '1rem 2rem',
     fontSize: '1.2rem',
-    backgroundColor: isRecording ? '#ff4444' : '#4CAF50',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

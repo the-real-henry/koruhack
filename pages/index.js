@@ -16,9 +16,13 @@ export default function Home() {
     }
   }, [notification, router]);
 
-  // Navigate to /feedback with a "media" query param
+  // Navigate to appropriate page based on media type
   function goToFeedback(mediaType) {
-    router.push(`/feedback?media=${mediaType}`);
+    if (mediaType === 'audio') {
+      router.push('/audio-record');
+    } else {
+      router.push(`/feedback?media=${mediaType}`);
+    }
   }
 
   return (
