@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     console.log('Sending response:', response);
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error processing audio:', error);
-    res.status(500).json({ error: 'Error processing audio' });
+    console.error('Error processing audio:', error.message);
+    res.status(500).json({ error: error.message });
   }
 }

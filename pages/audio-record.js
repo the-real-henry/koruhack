@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 
@@ -24,21 +23,20 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp3' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' }); // Changed to audio/wav
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
-        
+
         // Transcribe the audio
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.mp3');
-          
+          formData.append('audio', audioBlob, 'recording.wav'); // Changed to recording.wav
           const response = await fetch('/api/transcribe', {
             method: 'POST',
             body: formData,
           });
-          
+
           const data = await response.json();
           console.log('Transcription response:', data);
           if (data.text) {
@@ -77,7 +75,7 @@ export default function AudioRecord() {
   return (
     <div style={styles.container}>
       <h1>Audio Recording</h1>
-      
+
       <div style={styles.controls}>
         {!isRecording ? (
           <button onClick={startRecording} style={{...styles.button, backgroundColor: '#4CAF50'}}>
