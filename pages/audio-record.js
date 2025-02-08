@@ -22,13 +22,15 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { 
+          type: 'audio/mpeg' 
+        });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
+        audioChunksRef.current = []; // Clear chunks after creating blob
       };
 
-      mediaRecorderRef.current.start();
-      audioChunksRef.current = []; // Clear previous chunks
+      mediaRecorderRef.current.start(200); // Record in 200ms chunks
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
