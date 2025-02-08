@@ -18,7 +18,7 @@ export default function Feedback({ students = [], skills = [] }) {
 
   // State for rating (E, G, S, NI)
   const [rating, setRating] = useState(null);
-  
+
   // State for file attachment
   const [attachmentFile, setAttachmentFile] = useState(null);
 
@@ -58,7 +58,7 @@ export default function Feedback({ students = [], skills = [] }) {
     // For demonstration, teacher ID = 7 & Classroom ID = 2
     const teacherId = 7;        
     const classroomId = 2;
-    
+
     // 1. Ensure student, skill, and text note are filled
     if (!selectedStudent) {
       alert('Please select a student first');
@@ -72,7 +72,7 @@ export default function Feedback({ students = [], skills = [] }) {
       alert('Please enter some notes first');
       return;
     }
-    
+
     // Upload file if one is attached.
     let attachmentUrl = null;
     if (attachmentFile) {
@@ -129,6 +129,14 @@ export default function Feedback({ students = [], skills = [] }) {
     } catch (err) {
       console.error('Unexpected error:', err);
       alert('Something went wrong');
+    }
+  }
+
+  function goToFeedback(mediaType) {
+    if (mediaType === 'audio') {
+      router.push('/audio-record');
+    } else {
+      router.push(`/feedback?media=${mediaType}`);
     }
   }
 
