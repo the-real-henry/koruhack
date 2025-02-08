@@ -42,7 +42,8 @@ export default async function handler(req, res) {
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
       model: "whisper-1",
-      response_format: "json"
+      response_format: "json",
+      language: "en"
     });
 
     console.log('Transcription result:', transcription);
