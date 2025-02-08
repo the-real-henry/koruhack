@@ -57,6 +57,25 @@ export default function AudioRecord() {
           console.error('Transcription error:', error);
           alert('Error transcribing audio');
         }
+        // Create a FormData and send to API
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+
+        try {
+          setIsTranscribing(true);
+          const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const data = await response.json();
+          console.log('Transcription result:', data);
+          if (data.text) {
+            setTranscription(data.text);
+          }
+        } catch (error) {
+          console.error('Transcription error:', error);
+        }
         setIsTranscribing(false);
       };
 
