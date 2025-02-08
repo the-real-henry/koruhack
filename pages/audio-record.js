@@ -19,7 +19,10 @@ export default function AudioRecord() {
       const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
+      });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -104,7 +107,7 @@ export default function AudioRecord() {
           ) : transcription && (
             <div style={styles.transcription}>
               <h3>Transcription:</h3>
-              <p>{transcription}</p>
+              <div style={styles.transcriptionText}>{transcription}</div>
             </div>
           )}
           <button onClick={handleSubmit} style={styles.submitButton}>
@@ -117,6 +120,17 @@ export default function AudioRecord() {
 }
 
 const styles = {
+  transcriptionText: {
+    whiteSpace: 'pre-wrap',
+    lineHeight: '1.5',
+    fontSize: '1.1rem',
+    padding: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px',
+    margin: '1rem 0',
+    maxHeight: '300px',
+    overflowY: 'auto',
+  },
   container: {
     maxWidth: '600px',
     margin: '2rem auto',

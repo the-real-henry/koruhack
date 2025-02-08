@@ -42,8 +42,9 @@ export default async function handler(req, res) {
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
       model: "whisper-1",
-      response_format: "json",
-      language: "en"
+      response_format: "text",
+      language: "en",
+      prompt: "The following is a clear transcription with proper punctuation and capitalization."
     });
 
     console.log('Transcription result:', transcription);
