@@ -1,66 +1,101 @@
-// pages/api/transcribe.js
 
-import formidable from 'formidable';
-import fs from 'fs';
-import { IncomingForm } from 'formidable';
+import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/router';
 
-export const config = {
-  api: {
-    bodyParser: false, // We disable Next.js' default body parsing so formidable can handle it
-  },
-};
+export default function AudioRecord() {
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState('');
+  const [transcription, setTranscription] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const router = useRouter();
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-
-  // Parse the incoming form with formidable
-  const form = new IncomingForm();
-
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error('Error parsing form:', err);
-      res.status(500).json({ error: 'Error parsing form data' });
-      return;
-    }
-
-    // Access the uploaded file (the field name should match what we appended in the client)
-    const audioFile = files.audio;
-    if (!audioFile) {
-      res.status(400).json({ error: 'No audio file uploaded' });
-      return;
-    }
-
+  const startRecording = async () => {
     try {
-      // Create a FormData object to send to OpenAI
-      // (Node 18+ supports the standard FormData; if not, you may need to install the "form-data" package)
-      const formData = new FormData();
-      // Append the file. Note: audioFile.filepath contains the path to the temp file.
-      formData.append('file', fs.createReadStream(audioFile.filepath), {
-        filename: audioFile.originalFilename || 'recording.webm',
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
       });
-      formData.append('model', 'whisper-1');
-      // Optionally, you could add a language or prompt here.
+      
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
 
-      const openaiResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          // Note: Do not set the Content-Type header manually here;
-          // the browser/node will set the correct multipart/form-data boundary.
-        },
-        body: formData,
-      });
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-      const data = await openaiResponse.json();
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/webm'
+        });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
 
-      // Return the transcription data (or error information) back to the client
-      res.status(openaiResponse.ok ? 200 : openaiResponse.status).json(data);
+        // Create form data for API
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        // Transcribe the audio
+        setIsTranscribing(true);
+        try {
+          const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const data = await response.json();
+          console.log('Transcription response:', data);
+          
+          if (data.text) {
+            setTranscription(data.text);
+          } else {
+            console.log('No transcription text in response');
+          }
+        } catch (error) {
+          console.error('Transcription error:', error);
+        }
+        setIsTranscribing(false);
+      };
+
+      mediaRecorderRef.current.start(10);
+      setIsRecording(true);
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      res.status(500).json({ error: 'Error calling OpenAI transcription API' });
+      console.error('Error accessing microphone:', error);
     }
-  });
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h1>Audio Recorder</h1>
+      <div>
+        <button onClick={isRecording ? stopRecording : startRecording}>
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </button>
+        
+        {audioURL && (
+          <div style={{ marginTop: '20px' }}>
+            <audio src={audioURL} controls />
+          </div>
+        )}
+        
+        {isTranscribing && <p>Transcribing...</p>}
+        {transcription && (
+          <div style={{ marginTop: '20px' }}>
+            <h3>Transcription:</h3>
+            <p>{transcription}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
