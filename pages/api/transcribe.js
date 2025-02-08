@@ -1,6 +1,7 @@
 
 import { OpenAI } from 'openai';
 import formidable from 'formidable';
+import fs from 'fs';
 
 export const config = {
   api: {
@@ -13,13 +14,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = formidable();
+  const form = new formidable.IncomingForm();
 
   try {
-    const [_, files] = await form.parse(req);
-    const audioFile = files.audio?.[0];
+    const [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        resolve([fields, files]);
+      });
+    });
 
-    if (!audioFile) {
+    if (!files.audio) {
       throw new Error('No audio file received');
     }
 
@@ -27,8 +32,9 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    const audioPath = files.audio.filepath;
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(audioFile.filepath),
+      file: fs.createReadStream(audioPath),
       model: "whisper-1",
       language: "en"
     });
