@@ -19,7 +19,10 @@ export default function AudioRecord() {
       const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
+      });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
