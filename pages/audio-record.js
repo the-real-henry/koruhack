@@ -25,9 +25,7 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm'
-        });
+        const audioBlob = new Blob(audioChunksRef.current);
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
