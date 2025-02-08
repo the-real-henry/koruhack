@@ -12,24 +12,16 @@ export default function AudioRecord() {
 
   const startRecording = async () => {
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Media devices API not supported');
-      }
-
-      // First check if permission is already granted
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const audioDevices = devices.filter(device => device.kind === 'audioinput');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false,
+          latency: 0
+        }
+      });
       
-      if (audioDevices.length === 0) {
-        throw new Error('No audio input devices found');
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true
-      });
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
