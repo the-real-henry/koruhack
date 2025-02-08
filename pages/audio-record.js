@@ -31,11 +31,11 @@ export default function AudioRecord() {
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
-        // Transcribe the audio
+        // Create a new FormData with the correct filename and type
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.wav');
+          formData.append('audio', audioBlob, 'recording.webm');
           const response = await fetch('/api/transcribe', {
             method: 'POST',
             body: formData,

@@ -28,10 +28,14 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    if (!files.audio || !files.audio.filepath) {
+    if (!files.audio) {
       throw new Error('No audio file received');
     }
     
+    if (!files.audio.filepath) {
+      throw new Error('Invalid audio file');
+    }
+
     console.log('Processing audio file:', files.audio.filepath);
     const fileStream = fs.createReadStream(files.audio.filepath);
     
