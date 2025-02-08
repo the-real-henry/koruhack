@@ -23,7 +23,7 @@ export default function AudioRecord() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' }); // Changed to audio/wav
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
@@ -31,7 +31,7 @@ export default function AudioRecord() {
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.wav'); // Changed to recording.wav
+          formData.append('audio', audioBlob, 'recording.wav');
           const response = await fetch('/api/transcribe', {
             method: 'POST',
             body: formData,
