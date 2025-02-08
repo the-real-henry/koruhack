@@ -42,9 +42,10 @@ export default async function handler(req, res) {
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
       model: "whisper-1",
-      response_format: "text"
+      response_format: "json"
     });
 
+    fileStream.destroy();
     // Clean up the temporary file
     fs.unlinkSync(files.audio.filepath);
 
