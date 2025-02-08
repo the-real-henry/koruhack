@@ -28,15 +28,20 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    console.log('Processing audio file:', files.audio.filepath);
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(files.audio.filepath),
       model: "whisper-1",
     });
 
+    console.log('OpenAI response:', transcription);
+
     // Clean up the temporary file
     fs.unlinkSync(files.audio.filepath);
 
-    res.status(200).json({ text: transcription.text });
+    const response = { text: transcription.text };
+    console.log('Sending response:', response);
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error processing audio:', error);
     res.status(500).json({ error: 'Error processing audio' });

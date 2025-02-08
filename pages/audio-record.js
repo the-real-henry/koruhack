@@ -40,7 +40,13 @@ export default function AudioRecord() {
           });
           
           const data = await response.json();
-          setTranscription(data.text);
+          console.log('Transcription response:', data);
+          if (data.text) {
+            setTranscription(data.text);
+            console.log('Setting transcription:', data.text);
+          } else {
+            console.error('No transcription text in response');
+          }
         } catch (error) {
           console.error('Transcription error:', error);
           alert('Error transcribing audio');
