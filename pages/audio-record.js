@@ -25,16 +25,10 @@ export default function AudioRecord() {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          channelCount: 1,
-          sampleRate: 44100,
-          echoCancellation: true,
-          noiseSuppression: true
-        }
+        audio: true
       });
       mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
-        audioBitsPerSecond: 128000
+        mimeType: 'audio/webm;codecs=opus'
       });
       audioChunksRef.current = [];
 
