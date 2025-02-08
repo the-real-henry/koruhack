@@ -30,17 +30,16 @@ export default function AudioRecord() {
 
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm'
+          type: 'audio/webm;codecs=opus'
         });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
-        // Create a new FormData with the correct filename and type
+        // Create a FormData and send to API
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          const audioFile = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
-          formData.append('audio', audioFile);
+          formData.append('audio', audioBlob, 'recording.webm');
 
           const response = await fetch('/api/transcribe', {
             method: 'POST',

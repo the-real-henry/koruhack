@@ -24,8 +24,8 @@ export default async function handler(req, res) {
       });
     });
 
-    const audioFile = files.audio?.[0];
-    if (!audioFile || !audioFile.filepath) {
+    const audioFile = files.audio;
+    if (!audioFile) {
       throw new Error('No audio file received');
     }
 
