@@ -59,7 +59,9 @@ export default function AudioRecord() {
         }
         // Create a FormData and send to API
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
+        // Create a File object from the Blob with a specific filename
+        const audioFile = new File([audioBlob], 'audio.webm', { type: audioBlob.type });
+        formData.append('audio', audioFile);
 
         try {
           setIsTranscribing(true);
