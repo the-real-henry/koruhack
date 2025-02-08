@@ -18,7 +18,7 @@ export default function AudioRecord() {
       }
 
       // First check if we have permission
-      const permissionResult = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      const permissionResult = await navigator.permissions.query({ name: 'microphone' });
       if (permissionResult.state === 'denied') {
         alert('Please enable microphone access in your browser settings');
         return;
