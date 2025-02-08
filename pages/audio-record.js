@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 
@@ -5,10 +6,10 @@ export default function AudioRecord() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [transcription, setTranscription] = useState('');
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const router = useRouter();
+  const recognitionRef = useRef(null);
 
   const startRecording = async () => {
     try {
@@ -18,43 +19,38 @@ export default function AudioRecord() {
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
+      // Initialize speech recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+
+      recognitionRef.current.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript + ' ';
+          }
+        }
+        if (finalTranscript) {
+          setTranscription(finalTranscript.trim());
+        }
+      };
+
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
-      mediaRecorderRef.current.onstop = async () => {
+      mediaRecorderRef.current.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mpeg' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
-
-        // Create a new FormData with the correct filename and type
-        setIsTranscribing(true);
-        try {
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.wav');
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-
-          const data = await response.json();
-          console.log('Transcription response:', data);
-          if (data.text) {
-            setTranscription(data.text);
-            console.log('Setting transcription:', data.text);
-          } else {
-            console.error('No transcription text in response');
-          }
-        } catch (error) {
-          console.error('Transcription error:', error);
-          alert('Error transcribing audio');
-        }
-        setIsTranscribing(false);
       };
 
       mediaRecorderRef.current.start(10);
+      recognitionRef.current.start();
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -65,6 +61,9 @@ export default function AudioRecord() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       setIsRecording(false);
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
@@ -93,9 +92,7 @@ export default function AudioRecord() {
       {audioURL && (
         <div style={styles.audioPreview}>
           <audio src={audioURL} controls />
-          {isTranscribing ? (
-            <div>Transcribing...</div>
-          ) : transcription && (
+          {transcription && (
             <div style={styles.transcription}>
               <h3>Transcription:</h3>
               <div style={styles.transcriptionText}>{transcription}</div>
