@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = new formidable.IncomingForm();
+  const form = formidable();
 
   try {
     const [fields, files] = await new Promise((resolve, reject) => {
@@ -24,8 +24,8 @@ export default async function handler(req, res) {
       });
     });
 
-    const audioFile = files.audio;
-    if (!audioFile) {
+    const audioFile = files.audio?.[0];
+    if (!audioFile || !audioFile.filepath) {
       throw new Error('No audio file received');
     }
 

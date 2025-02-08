@@ -39,7 +39,8 @@ export default function AudioRecord() {
         setIsTranscribing(true);
         try {
           const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
+          const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm;codecs=opus' });
+          formData.append('audio', file);
 
           const response = await fetch('/api/transcribe', {
             method: 'POST',
