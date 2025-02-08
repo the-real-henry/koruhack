@@ -12,17 +12,17 @@ export default function AudioRecord() {
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          autoGainControl: false,
-          noiseSuppression: false,
-          latency: 0
-        }
+        audio: true
       });
       
+      const mimeType = 'audio/webm';
       mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: mimeType
       });
       audioChunksRef.current = [];
 
