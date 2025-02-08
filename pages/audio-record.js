@@ -1,10 +1,13 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
+import OpenAI from 'openai';
 
 export default function AudioRecord() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
+  const [transcription, setTranscription] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const router = useRouter();
@@ -21,16 +24,32 @@ export default function AudioRecord() {
         }
       };
 
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/mpeg' 
-        });
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp3' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
-        audioChunksRef.current = []; // Clear chunks after creating blob
+        
+        // Transcribe the audio
+        setIsTranscribing(true);
+        try {
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.mp3');
+          
+          const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const data = await response.json();
+          setTranscription(data.text);
+        } catch (error) {
+          console.error('Transcription error:', error);
+          alert('Error transcribing audio');
+        }
+        setIsTranscribing(false);
       };
 
-      mediaRecorderRef.current.start(200); // Record in 200ms chunks
+      mediaRecorderRef.current.start(200);
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -69,6 +88,14 @@ export default function AudioRecord() {
       {audioURL && (
         <div style={styles.audioPreview}>
           <audio src={audioURL} controls />
+          {isTranscribing ? (
+            <div>Transcribing...</div>
+          ) : transcription && (
+            <div style={styles.transcription}>
+              <h3>Transcription:</h3>
+              <p>{transcription}</p>
+            </div>
+          )}
           <button onClick={handleSubmit} style={styles.submitButton}>
             Use Recording
           </button>
@@ -110,4 +137,11 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
   },
+  transcription: {
+    textAlign: 'left',
+    width: '100%',
+    padding: '1rem',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '4px',
+  }
 };
