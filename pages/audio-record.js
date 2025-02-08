@@ -23,11 +23,15 @@ export default function AudioRecord() {
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/mpeg'
+        });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
@@ -56,7 +60,7 @@ export default function AudioRecord() {
         setIsTranscribing(false);
       };
 
-      mediaRecorderRef.current.start(200);
+      mediaRecorderRef.current.start(10);
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
