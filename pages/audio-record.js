@@ -13,10 +13,24 @@ export default function AudioRecord() {
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Media devices not supported');
+        alert('Your browser does not support audio recording');
+        return;
       }
 
-      const constraints = { audio: true, video: false };
+      // First check if we have permission
+      const permissionResult = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      if (permissionResult.state === 'denied') {
+        alert('Please enable microphone access in your browser settings');
+        return;
+      }
+
+      const constraints = { 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       mediaRecorderRef.current = new MediaRecorder(stream, {
