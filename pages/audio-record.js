@@ -1,7 +1,6 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
-import OpenAI from 'openai';
 
 export default function AudioRecord() {
   const [isRecording, setIsRecording] = useState(false);
