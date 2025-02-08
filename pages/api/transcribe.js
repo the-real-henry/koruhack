@@ -24,7 +24,8 @@ export default async function handler(req, res) {
       });
     });
 
-    if (!files.audio) {
+    const audioFile = files.audio?.[0];
+    if (!audioFile || !audioFile.filepath) {
       throw new Error('No audio file received');
     }
 
@@ -32,11 +33,11 @@ export default async function handler(req, res) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const audioPath = files.audio.filepath;
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(audioPath),
+      file: fs.createReadStream(audioFile.filepath),
       model: "whisper-1",
-      language: "en"
+      language: "en",
+      response_format: "json"
     });
 
     res.status(200).json({ text: transcription.text });
