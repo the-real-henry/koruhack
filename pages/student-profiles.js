@@ -50,10 +50,29 @@ export default function StudentProfiles() {
               <source src={feedback.file_url} type="audio/mpeg" />
               Your browser does not support the audio element.
             </audio>
-            <div style={styles.transcription}>
-              <h4>Transcription:</h4>
-              <p>{feedback.transcription}</p>
-            </div>
+            {feedback.transcription && (
+              <div style={styles.transcription}>
+                <h4>Transcription:</h4>
+                <p>{feedback.transcription}</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {feedback.file_url && feedback.file_url.includes('.jpg') && (
+          <div style={styles.mediaContainer}>
+            <h4>Photo Evidence:</h4>
+            <img src={feedback.file_url} alt="Evidence" style={styles.image} />
+          </div>
+        )}
+        
+        {feedback.file_url && feedback.file_url.includes('.webm') && (
+          <div style={styles.mediaContainer}>
+            <h4>Video Evidence:</h4>
+            <video controls style={styles.video}>
+              <source src={feedback.file_url} type="video/webm" />
+              Your browser does not support the video element.
+            </video>
           </div>
         )}
       </div>
@@ -165,5 +184,15 @@ const styles = {
   backButton: {
     padding: '0.5rem 1rem',
     cursor: 'pointer',
+  },
+  image: {
+    maxWidth: '100%',
+    borderRadius: '4px',
+    marginTop: '0.5rem',
+  },
+  video: {
+    width: '100%',
+    borderRadius: '4px',
+    marginTop: '0.5rem',
   },
 };
