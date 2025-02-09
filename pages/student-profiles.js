@@ -13,6 +13,12 @@ export default function StudentProfiles() {
     fetchStudents();
   }, []);
 
+  useEffect(() => {
+    if (selectedStudent) {
+      fetchFeedbackData(selectedStudent);
+    }
+  }, [selectedStudent]);
+
   const fetchStudents = async () => {
     const { data: studentsData } = await supabase
       .from('users')
@@ -22,14 +28,17 @@ export default function StudentProfiles() {
     setStudents(studentsData || []);
   };
 
-  const handleStudentClick = async (student) => {
-    setSelectedStudent(student);
+  const fetchFeedbackData = async (student) => {
     const { data: feedback } = await supabase
       .from('feedback')
       .select('*')
       .eq('student_id', student.user_id)
       .order('created_at', { ascending: false });
     setFeedbackData({ ...feedbackData, [student.user_id]: feedback });
+  };
+
+  const handleStudentClick = (student) => {
+    setSelectedStudent(student);
   };
 
   const TranscriptionSection = ({ feedback }) => {
