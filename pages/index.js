@@ -1,11 +1,13 @@
 // pages/index.js
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
+import AudioRecord from "./audio-record"; // Adjust the import path as needed
 
 export default function Home() {
-  const [notification, setNotification] = useState('');
+  const [notification, setNotification] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [showAudio, setShowAudio] = useState(false); // New state for audio modal
   const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -15,30 +17,28 @@ export default function Home() {
   useEffect(() => {
     // Check for "submitted" query parameter
     const params = new URLSearchParams(window.location.search);
-    if (params.has('submitted') && !notification) {
-      setNotification('Feedback submitted successfully!');
+    if (params.has("submitted") && !notification) {
+      setNotification("Feedback submitted successfully!");
       // Remove the query parameter so the notification doesn't persist
-      router.replace('/', undefined, { shallow: true });
+      router.replace("/", undefined, { shallow: true });
     }
   }, [notification, router]);
 
-  // Navigate to appropriate page based on media type
   async function startCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Your browser does not support camera access');
+      alert("Your browser does not support camera access");
       return;
     }
 
     try {
-      setShowCamera(true); // Show the modal first
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      setShowCamera(true); // Show the camera modal
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
+          height: { ideal: 720 },
+        },
       });
-      
-      // Wait for next render to ensure video element exists
+
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -46,46 +46,54 @@ export default function Home() {
         }
       }, 100);
     } catch (error) {
-      if (error.name === 'NotAllowedError') {
-        alert('Camera access was denied. Please allow camera access to use this feature.');
-      } else if (error.name === 'NotFoundError') {
-        alert('No camera device was found on your system.');
+      if (error.name === "NotAllowedError") {
+        alert(
+          "Camera access was denied. Please allow camera access to use this feature.",
+        );
+      } else if (error.name === "NotFoundError") {
+        alert("No camera device was found on your system.");
       } else {
-        alert('Error accessing camera: ' + error.message);
+        alert("Error accessing camera: " + error.message);
       }
-      console.error('Camera error:', error);
+      console.error("Camera error:", error);
     }
   }
 
   function capturePhoto() {
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
-    
-    canvas.toBlob((blob) => {
-      const imageUrl = URL.createObjectURL(blob);
-      // Stop the camera stream
-      const stream = videoRef.current.srcObject;
-      stream.getTracks().forEach(track => track.stop());
-      setShowCamera(false);
-      router.push(`/feedback?media=photo&imageUrl=${imageUrl}`);
-    }, 'image/jpeg');
+    canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
+
+    // Convert canvas image to base64 data URL
+    const imageDataUrl = canvas.toDataURL("image/jpeg");
+
+    // Stop the camera stream
+    const stream = videoRef.current.srcObject;
+    stream.getTracks().forEach((track) => track.stop());
+    setShowCamera(false);
+
+    // Save the captured image in sessionStorage
+    sessionStorage.setItem("capturedImage", imageDataUrl);
+
+    // Route to feedback.js (you can pass media=photo if needed)
+    router.push("/feedback?media=photo");
   }
+
 
   async function startVideo() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Your browser does not support video recording');
+      alert("Your browser does not support video recording");
       return;
     }
 
     try {
       setShowVideo(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true
+        audio: true,
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -101,25 +109,35 @@ export default function Home() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        const stream = videoRef.current.srcObject;
-        stream.getTracks().forEach(track => track.stop());
-        setShowVideo(false);
-        router.push(`/feedback?media=video&videoUrl=${videoUrl}`);
+        const videoBlob = new Blob(chunksRef.current, { type: "video/webm" });
+        const reader = new FileReader();
+        reader.readAsDataURL(videoBlob);
+        reader.onloadend = () => {
+          // Store the video as a base64 string in sessionStorage
+          sessionStorage.setItem("capturedVideo", reader.result);
+          // Stop the camera stream
+          const stream = videoRef.current.srcObject;
+          stream.getTracks().forEach((track) => track.stop());
+          setShowVideo(false);
+          // Navigate to feedback.js with media=video
+          router.push("/feedback?media=video");
+        };
       };
     } catch (error) {
-      console.error('Error accessing camera/microphone:', error);
-      alert('Error accessing camera/microphone. Please ensure you have granted permission.');
+      console.error("Error accessing camera/microphone:", error);
+      alert(
+        "Error accessing camera/microphone. Please ensure you have granted permission.",
+      );
     }
   }
 
+  // Instead of navigating to a separate audio page, open the audio modal
   function goToFeedback(mediaType) {
-    if (mediaType === 'audio') {
-      router.push('/audio-record');
-    } else if (mediaType === 'photo') {
+    if (mediaType === "audio") {
+      setShowAudio(true);
+    } else if (mediaType === "photo") {
       startCamera();
-    } else if (mediaType === 'video') {
+    } else if (mediaType === "video") {
       startVideo();
     } else {
       router.push(`/feedback?media=${mediaType}`);
@@ -129,26 +147,30 @@ export default function Home() {
   return (
     <div style={styles.container}>
       <h1>Start Screen</h1>
-      {/* Notification Bar */}
-      {notification && (
-        <div style={styles.notification}>{notification}</div>
-      )}
+      {notification && <div style={styles.notification}>{notification}</div>}
 
-      {/* Media Buttons */}
       <div style={styles.buttonRow}>
-        <button onClick={() => goToFeedback('audio')} style={styles.bigButton}>
-          <span role="img" aria-label="mic">🎤</span> Mic
+        <button onClick={() => goToFeedback("audio")} style={styles.bigButton}>
+          <span role="img" aria-label="mic">
+            🎤
+          </span>{" "}
+          Mic
         </button>
-        <button onClick={() => goToFeedback('photo')} style={styles.bigButton}>
-          <span role="img" aria-label="camera">📷</span> Camera
+        <button onClick={() => goToFeedback("photo")} style={styles.bigButton}>
+          <span role="img" aria-label="camera">
+            📷
+          </span>{" "}
+          Camera
         </button>
-        <button onClick={() => goToFeedback('video')} style={styles.bigButton}>
-          <span role="img" aria-label="video">📹</span> Video
+        <button onClick={() => goToFeedback("video")} style={styles.bigButton}>
+          <span role="img" aria-label="video">
+            📹
+          </span>{" "}
+          Video
         </button>
       </div>
 
-      {/* Text Button */}
-      <button onClick={() => goToFeedback('text')} style={styles.textButton}>
+      <button onClick={() => goToFeedback("text")} style={styles.textButton}>
         Add Text Only
       </button>
 
@@ -156,16 +178,11 @@ export default function Home() {
       {showVideo && (
         <div style={styles.modal}>
           <div style={styles.modalContent}>
-            <h2>{isRecording ? 'Recording Video...' : 'Start Recording'}</h2>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              style={styles.video}
-            />
+            <h2>{isRecording ? "Recording Video..." : "Start Recording"}</h2>
+            <video ref={videoRef} autoPlay playsInline style={styles.video} />
             <div style={styles.buttonGroup}>
               {!isRecording ? (
-                <button 
+                <button
                   onClick={() => {
                     setIsRecording(true);
                     mediaRecorderRef.current.start();
@@ -175,20 +192,23 @@ export default function Home() {
                   Start Recording
                 </button>
               ) : (
-                <button 
+                <button
                   onClick={() => {
                     setIsRecording(false);
                     mediaRecorderRef.current.stop();
                   }}
-                  style={{...styles.captureButton, backgroundColor: '#ff4444'}}
+                  style={{
+                    ...styles.captureButton,
+                    backgroundColor: "#ff4444",
+                  }}
                 >
                   Stop Recording
                 </button>
               )}
-              <button 
+              <button
                 onClick={() => {
                   const stream = videoRef.current.srcObject;
-                  stream.getTracks().forEach(track => track.stop());
+                  stream.getTracks().forEach((track) => track.stop());
                   setShowVideo(false);
                   setIsRecording(false);
                 }}
@@ -206,23 +226,15 @@ export default function Home() {
         <div style={styles.modal}>
           <div style={styles.modalContent}>
             <h2>Take Photo</h2>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              style={styles.video}
-            />
+            <video ref={videoRef} autoPlay playsInline style={styles.video} />
             <div style={styles.buttonGroup}>
-              <button 
-                onClick={capturePhoto}
-                style={styles.captureButton}
-              >
+              <button onClick={capturePhoto} style={styles.captureButton}>
                 Capture
               </button>
-              <button 
+              <button
                 onClick={() => {
                   const stream = videoRef.current.srcObject;
-                  stream.getTracks().forEach(track => track.stop());
+                  stream.getTracks().forEach((track) => track.stop());
                   setShowCamera(false);
                 }}
                 style={styles.closeButton}
@@ -233,93 +245,115 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Audio Recording Modal */}
+      {showAudio && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <AudioRecord
+              onTranscription={(transcribedText) => {
+                // Once transcription is complete, close the modal and navigate to the feedback page.
+                setShowAudio(false);
+                router.push(
+                  `/feedback?media=audio&transcription=${encodeURIComponent(transcribedText)}`,
+                );
+              }}
+            />
+            <button
+              onClick={() => setShowAudio(false)}
+              style={styles.closeButton}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Inline styles for quick prototyping:
 const styles = {
   modal: {
-    position: 'fixed',
+    position: "fixed",
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1000,
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: '2rem',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    alignItems: 'center',
+    backgroundColor: "white",
+    padding: "2rem",
+    borderRadius: "8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    alignItems: "center",
   },
   fileInput: {
-    margin: '1rem 0',
+    margin: "1rem 0",
   },
   video: {
-    width: '100%',
-    maxWidth: '500px',
-    borderRadius: '8px',
+    width: "100%",
+    maxWidth: "500px",
+    borderRadius: "8px",
   },
   buttonGroup: {
-    display: 'flex',
-    gap: '1rem',
-    marginTop: '1rem',
+    display: "flex",
+    gap: "1rem",
+    marginTop: "1rem",
   },
   captureButton: {
-    padding: '0.5rem 1rem',
-    cursor: 'pointer',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
+    padding: "0.5rem 1rem",
+    cursor: "pointer",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
   },
   closeButton: {
-    padding: '0.5rem 1rem',
-    cursor: 'pointer',
-    backgroundColor: '#ff4444',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
+    padding: "0.5rem 1rem",
+    cursor: "pointer",
+    backgroundColor: "#ff4444",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
   },
   container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "100vh",
   },
   buttonRow: {
-    display: 'flex',
-    gap: '1rem',
-    margin: '2rem',
+    display: "flex",
+    gap: "1rem",
+    margin: "2rem",
   },
   bigButton: {
-    width: '120px',
-    height: '150px',
-    fontSize: '1.2rem',
-    cursor: 'pointer',
+    width: "120px",
+    height: "150px",
+    fontSize: "1.2rem",
+    cursor: "pointer",
   },
   textButton: {
-    padding: '1rem 2rem',
-    fontSize: '1rem',
-    cursor: 'pointer',
+    padding: "1rem 2rem",
+    fontSize: "1rem",
+    cursor: "pointer",
   },
   notification: {
-    backgroundColor: '#dff0d8',
-    color: '#3c763d',
-    padding: '1rem',
-    marginBottom: '1rem',
-    borderRadius: '5px',
-    textAlign: 'center',
-    width: '100%',
-    maxWidth: '400px',
+    backgroundColor: "#dff0d8",
+    color: "#3c763d",
+    padding: "1rem",
+    marginBottom: "1rem",
+    borderRadius: "5px",
+    textAlign: "center",
+    width: "100%",
+    maxWidth: "400px",
   },
 };

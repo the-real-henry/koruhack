@@ -1,6 +1,6 @@
-
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../utils/supabase';
 
 export default function AudioRecord() {
   const [isRecording, setIsRecording] = useState(false);
@@ -15,7 +15,7 @@ export default function AudioRecord() {
     try {
       const constraints = { audio: true, video: false };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
+
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -43,10 +43,18 @@ export default function AudioRecord() {
         }
       };
 
-      mediaRecorderRef.current.onstop = () => {
+      // When recording stops, store the recording in sessionStorage (do not upload now)
+      mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mpeg' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
+
+        // Convert the audio blob to a base64 string and store it in sessionStorage
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          sessionStorage.setItem('audioRecording', reader.result);
+        };
       };
 
       mediaRecorderRef.current.start(10);
@@ -54,7 +62,7 @@ export default function AudioRecord() {
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      alert('Error accessing microphone. Please ensure you have granted permission.');
+      alert("Error accessing microphone. Please ensure you have granted permission.");
     }
   };
 
@@ -70,20 +78,26 @@ export default function AudioRecord() {
   };
 
   const handleSubmit = () => {
-    router.push('/feedback');
+    // Navigate to feedback page with the transcription as a query parameter.
+    // The audio recording is stored in sessionStorage and will be uploaded in feedback.js.
+    router.push(`/feedback?media=audio&transcription=${encodeURIComponent(transcription)}`);
   };
+
+  // Auto-start recording on mount
+  useEffect(() => {
+    startRecording();
+  }, []);
 
   return (
     <div style={styles.container}>
       <h1>Audio Recording</h1>
-
       <div style={styles.controls}>
         {!isRecording ? (
-          <button onClick={startRecording} style={{...styles.button, backgroundColor: '#4CAF50'}}>
+          <button onClick={startRecording} style={{ ...styles.button, backgroundColor: '#4CAF50' }}>
             Start Recording
           </button>
         ) : (
-          <button onClick={stopRecording} style={{...styles.button, backgroundColor: '#ff4444'}}>
+          <button onClick={stopRecording} style={{ ...styles.button, backgroundColor: '#ff4444' }}>
             Stop Recording
           </button>
         )}
