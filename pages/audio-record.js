@@ -32,8 +32,10 @@ export default function AudioRecord() {
             finalTranscript += event.results[i][0].transcript + ' ';
           }
         }
+        finalTranscript = finalTranscript.trim();
         if (finalTranscript) {
-          setTranscription(finalTranscript.trim());
+          setTranscription(finalTranscript);
+          sessionStorage.setItem('audioTranscription', finalTranscript);
         }
       };
 

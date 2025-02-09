@@ -194,6 +194,9 @@ export default function Feedback({ students = [], skills = [] }) {
 
     try {
       // 2. Insert into the "feedback" table
+      // Get transcription from session storage
+      const transcriptionText = sessionStorage.getItem('audioTranscription');
+
       const { data, error } = await supabase
         .from("feedback")
         .insert({
@@ -204,7 +207,7 @@ export default function Feedback({ students = [], skills = [] }) {
           text_note: textNote,
           rating: chosenRating,
           file_url: attachmentUrl,
-          transcription: audioTranscription || sessionStorage.getItem('audioTranscription'),
+          transcription: transcriptionText,
           approval_status: "APPROVED", // teacher auto-approves
         })
         .select();
