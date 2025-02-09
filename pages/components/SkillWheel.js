@@ -11,35 +11,33 @@ const SkillWheel = ({ studentId, feedbackData }) => {
     'Creativity'
   ];
 
-  // Initialize values at "G" (7)
-  const [values, setValues] = useState(skills.map(() => 7));
+  // Initialize values at 3 points per skill
+  const [values, setValues] = useState(skills.map(() => 3));
 
   useEffect(() => {
     if (feedbackData) {
-      // Calculate average ratings per skill
-      const ratings = { E: 10, G: 7, S: 4, NI: 1 };
-      const skillRatings = {};
+      // Calculate points per skill
+      const points = {
+        E: 0.5,  // Excellent adds 0.5 points
+        G: 0.2,  // Good adds 0.2 points
+        S: -0.2, // Satisfactory subtracts 0.2 points
+        NI: -0.5 // Needs Improvement subtracts 0.5 points
+      };
       
+      // Start with base points (3) for each skill
+      const skillPoints = skills.map(() => 3);
+      
+      // Process each feedback and adjust points
       feedbackData.forEach(feedback => {
         const skillId = feedback.skill_id - 1; // Assuming skill_ids start at 1
         if (skillId >= 0 && skillId < skills.length) {
-          if (!skillRatings[skillId]) {
-            skillRatings[skillId] = [];
-          }
-          skillRatings[skillId].push(ratings[feedback.rating]);
+          skillPoints[skillId] += points[feedback.rating];
+          // Cap points between 1 and 5
+          skillPoints[skillId] = Math.max(1, Math.min(5, skillPoints[skillId]));
         }
       });
 
-      // Update values with averages or default to 7 (G)
-      const newValues = values.map((defaultValue, index) => {
-        if (skillRatings[index]) {
-          const avg = skillRatings[index].reduce((a, b) => a + b, 0) / skillRatings[index].length;
-          return Math.round(avg);
-        }
-        return defaultValue;
-      });
-
-      setValues(newValues);
+      setValues(skillPoints);
     }
   }, [feedbackData]);
 
@@ -47,7 +45,7 @@ const SkillWheel = ({ studentId, feedbackData }) => {
   const size = 400;
   const center = size / 2;
   const radius = size * 0.35;
-  const maxValue = 10;
+  const maxValue = 5; // Max points is 5
 
   const getPoints = () => {
     return values.map((value, i) => {
@@ -70,8 +68,8 @@ const SkillWheel = ({ studentId, feedbackData }) => {
   return (
     <div style={styles.wheelContainer}>
       <svg viewBox={`0 0 ${size} ${size}`} style={styles.svg}>
-        {/* Background grid circles */}
-        {[2, 4, 6, 8, 10].map((level) => (
+        {/* Background grid circles - now showing point levels */}
+        {[1, 2, 3, 4, 5].map((level) => (
           <polyline
             key={level}
             points={getGridCircle(level)}
@@ -126,6 +124,16 @@ const SkillWheel = ({ studentId, feedbackData }) => {
           );
         })}
       </svg>
+      
+      {/* Point values display */}
+      <div style={styles.pointsDisplay}>
+        {skills.map((skill, i) => (
+          <div key={i} style={styles.pointRow}>
+            <span>{skill}:</span>
+            <span>{values[i].toFixed(1)} points</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -147,6 +155,17 @@ const styles = {
   skillLabel: {
     fontSize: '14px',
     fontWeight: 500
+  },
+  pointsDisplay: {
+    marginTop: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '8px'
+  },
+  pointRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.25rem 0'
   }
 };
 
