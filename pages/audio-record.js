@@ -49,12 +49,14 @@ export default function AudioRecord() {
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
-        // Convert the audio blob to a base64 string and store it in sessionStorage
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          sessionStorage.setItem('audioRecording', reader.result);
-        };
+        // Only access sessionStorage on the client side
+        if (typeof window !== 'undefined') {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            sessionStorage.setItem('audioRecording', reader.result);
+          };
+        }
       };
 
       mediaRecorderRef.current.start(10);
