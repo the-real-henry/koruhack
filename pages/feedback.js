@@ -395,10 +395,6 @@ export async function getServerSideProps() {
     { skill_id: 6, name: 'Creativity' }
   ];
 
-  if (skillError) {
-    console.error("Error fetching skills:", skillError);
-  }
-
   return {
     props: {
       students: students || [],
