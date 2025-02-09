@@ -204,6 +204,7 @@ export default function Feedback({ students = [], skills = [] }) {
           text_note: textNote,
           rating: chosenRating,
           file_url: attachmentUrl,
+          speech_transcription: audioTranscription,
           approval_status: "APPROVED", // teacher auto-approves
         })
         .select();

@@ -52,7 +52,7 @@ export default function StudentProfiles() {
             </audio>
             <div style={styles.transcription}>
               <h4>Transcription:</h4>
-              <p>{feedback.speech_transcription || 'No transcription available'}</p>
+              <p>{feedback.speech_transcription || feedback.transcription || 'No transcription available'}</p>
             </div>
           </div>
         )}
