@@ -146,6 +146,12 @@ export default function Home() {
 
   return (
     <div style={styles.container}>
+      <button 
+        onClick={() => router.push('/student-profiles')} 
+        style={styles.profileButton}
+      >
+        View class learner profiles
+      </button>
       <h1>Start Screen</h1>
       {notification && <div style={styles.notification}>{notification}</div>}
 
@@ -273,6 +279,17 @@ export default function Home() {
 }
 
 const styles = {
+  profileButton: {
+    position: 'absolute',
+    top: '1rem',
+    left: '1rem',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#0070f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
   modal: {
     position: "fixed",
     top: 0,
