@@ -2,38 +2,37 @@
 import React, { useState, useEffect } from 'react';
 
 const SkillWheel = ({ studentId, feedbackData }) => {
-  const skills = [
-    'Collaboration',
-    'Organization', 
-    'Independence',
-    'Communication',
-    'Leadership',
-    'Creativity'
-  ];
+  // Map skill_ids to their respective names (matching database)
+  const skillMap = {
+    1: 'Collaboration',
+    2: 'Organization', 
+    3: 'Independence',
+    4: 'Communication',
+    5: 'Leadership',
+    6: 'Creativity'
+  };
 
-  // Initialize values at 3 points per skill
+  const skills = Object.values(skillMap);
   const [values, setValues] = useState(skills.map(() => 3));
 
   useEffect(() => {
     if (feedbackData) {
-      // Calculate points per skill
       const points = {
-        E: 0.5,  // Excellent adds 0.5 points
-        G: 0.2,  // Good adds 0.2 points
-        S: -0.2, // Satisfactory subtracts 0.2 points
-        NI: -0.5 // Needs Improvement subtracts 0.5 points
+        E: 0.5,
+        G: 0.2,
+        S: -0.2,
+        NI: -0.5
       };
       
-      // Start with base points (3) for each skill
+      // Start with base points
       const skillPoints = skills.map(() => 3);
       
-      // Process each feedback and adjust points
+      // Process feedback using proper skill mapping
       feedbackData.forEach(feedback => {
-        const skillId = feedback.skill_id - 1; // Assuming skill_ids start at 1
-        if (skillId >= 0 && skillId < skills.length) {
-          skillPoints[skillId] += points[feedback.rating];
-          // Cap points between 1 and 5
-          skillPoints[skillId] = Math.max(1, Math.min(5, skillPoints[skillId]));
+        const skillIndex = Object.keys(skillMap).indexOf(feedback.skill_id.toString());
+        if (skillIndex !== -1) {
+          skillPoints[skillIndex] += points[feedback.rating];
+          skillPoints[skillIndex] = Math.max(1, Math.min(5, skillPoints[skillIndex]));
         }
       });
 
