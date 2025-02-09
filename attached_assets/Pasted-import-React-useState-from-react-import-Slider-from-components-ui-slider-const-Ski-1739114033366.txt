@@ -1,0 +1,135 @@
+import React, { useState } from 'react';
+import { Slider } from '@/components/ui/slider';
+
+const SkillWheel = () => {
+  const skills = [
+    'Collaboration',
+    'Organization',
+    'Independence',
+    'Communication',
+    'Leadership',
+    'Creativity'
+  ];
+
+  const [values, setValues] = useState(skills.map(() => 5));
+
+  // SVG dimensions and calculations
+  const size = 400;
+  const center = size / 2;
+  const radius = size * 0.35;
+  const maxValue = 10;
+
+  // Calculate points for the polygon
+  const getPoints = () => {
+    return values.map((value, i) => {
+      const angle = (i * 2 * Math.PI) / skills.length - Math.PI / 2;
+      const distance = (value / maxValue) * radius;
+      return `${center + distance * Math.cos(angle)},${center + distance * Math.sin(angle)}`;
+    }).join(' ');
+  };
+
+  // Calculate grid points for reference circles
+  const getGridCircle = (level) => {
+    const points = [];
+    for (let i = 0; i < 360; i += 1) {
+      const angle = (i * Math.PI) / 180;
+      const distance = (level / maxValue) * radius;
+      points.push(`${center + distance * Math.cos(angle)},${center + distance * Math.sin(angle)}`);
+    }
+    return points.join(' ');
+  };
+
+  const handleSliderChange = (newValue, index) => {
+    const newValues = [...values];
+    newValues[index] = newValue[0];
+    setValues(newValues);
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto p-4">
+      <div className="mb-8">
+        <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
+          {/* Background grid circles */}
+          {[2, 4, 6, 8, 10].map((level) => (
+            <polyline
+              key={level}
+              points={getGridCircle(level)}
+              fill="none"
+              stroke="#e5e7eb"
+              strokeWidth="1"
+              className="opacity-50"
+            />
+          ))}
+
+          {/* Axis lines */}
+          {skills.map((_, i) => {
+            const angle = (i * 2 * Math.PI) / skills.length - Math.PI / 2;
+            return (
+              <line
+                key={i}
+                x1={center}
+                y1={center}
+                x2={center + radius * Math.cos(angle)}
+                y2={center + radius * Math.sin(angle)}
+                stroke="#e5e7eb"
+                strokeWidth="1"
+                className="opacity-50"
+              />
+            );
+          })}
+
+          {/* Data polygon */}
+          <polygon
+            points={getPoints()}
+            fill="rgb(59, 130, 246)"
+            fillOpacity="0.5"
+            stroke="rgb(37, 99, 235)"
+            strokeWidth="2"
+          />
+
+          {/* Skill labels */}
+          {skills.map((skill, i) => {
+            const angle = (i * 2 * Math.PI) / skills.length - Math.PI / 2;
+            const labelDistance = radius + 30;
+            return (
+              <text
+                key={i}
+                x={center + labelDistance * Math.cos(angle)}
+                y={center + labelDistance * Math.sin(angle)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-sm font-medium"
+                transform={`rotate(${(i * 360) / skills.length}, ${
+                  center + labelDistance * Math.cos(angle)
+                }, ${center + labelDistance * Math.sin(angle)})`}
+              >
+                {skill}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Sliders */}
+      <div className="space-y-6">
+        {skills.map((skill, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex justify-between">
+              <label className="text-sm font-medium">{skill}</label>
+              <span className="text-sm text-gray-500">{values[i]}</span>
+            </div>
+            <Slider
+              value={[values[i]]}
+              min={0}
+              max={10}
+              step={1}
+              onValueChange={(value) => handleSliderChange(value, i)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default SkillWheel;
