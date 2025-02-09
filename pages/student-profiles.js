@@ -31,7 +31,55 @@ export default function StudentProfiles() {
     setFeedbackData({ ...feedbackData, [student.user_id]: feedback });
   };
 
-  const StudentFeedback = ({ feedback }) => {
+  const TranscriptionSection = ({ feedback }) => {
+  const [transcription, setTranscription] = useState(feedback.transcription);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getTranscription = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: JSON.stringify({ audioUrl: feedback.file_url }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      
+      if (data.text) {
+        setTranscription(data.text);
+        // Update the transcription in the database
+        await supabase
+          .from('feedback')
+          .update({ transcription: data.text })
+          .eq('feedback_id', feedback.feedback_id);
+      }
+    } catch (error) {
+      console.error('Error getting transcription:', error);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <div>
+      {transcription ? (
+        <p>{transcription}</p>
+      ) : (
+        <div>
+          <p>No transcription available</p>
+          <button 
+            onClick={getTranscription}
+            style={styles.transcribeButton}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Transcribing...' : 'Get Transcription'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const StudentFeedback = ({ feedback }) => {
     const date = new Date(feedback.created_at).toLocaleDateString();
 
     return (
@@ -51,7 +99,7 @@ export default function StudentProfiles() {
             </audio>
             <div style={styles.transcription}>
               <h4>Transcription:</h4>
-              <p>{feedback.transcription || 'No transcription available'}</p>
+              <TranscriptionSection feedback={feedback} />
             </div>
           </div>
         )}
@@ -190,6 +238,15 @@ const styles = {
   video: {
     width: '100%',
     borderRadius: '4px',
+    marginTop: '0.5rem',
+  },
+  transcribeButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#0070f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
     marginTop: '0.5rem',
   },
 };

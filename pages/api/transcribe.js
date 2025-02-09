@@ -14,30 +14,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = formidable();
-
   try {
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        resolve([fields, files]);
-      });
-    });
+    const { audioUrl } = JSON.parse(req.body);
+    
+    // Download the audio file
+    const response = await fetch(audioUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Create a temporary file
+    const tempFilePath = `/tmp/${Date.now()}.mp3`;
+    fs.writeFileSync(tempFilePath, buffer);
 
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    if (!files.audio) {
-      throw new Error('No audio file received');
-    }
-    
-    if (!files.audio.filepath) {
-      throw new Error('Invalid audio file');
-    }
-
-    console.log('Processing audio file:', files.audio.filepath);
-    const fileStream = fs.createReadStream(files.audio.filepath);
+    console.log('Processing audio file:', tempFilePath);
+    const fileStream = fs.createReadStream(tempFilePath);
     
     const transcription = await openai.audio.transcriptions.create({
       file: fileStream,
@@ -47,7 +41,7 @@ export default async function handler(req, res) {
 
     fileStream.destroy();
     // Clean up the temporary file
-    fs.unlinkSync(files.audio.filepath);
+    fs.unlinkSync(tempFilePath);
 
     return res.status(200).json({ text: transcription });
   } catch (error) {
