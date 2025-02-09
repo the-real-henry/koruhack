@@ -5,7 +5,11 @@ import { useRouter } from 'next/router';
 export default function Home() {
   const [notification, setNotification] = useState('');
   const [showCamera, setShowCamera] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -69,11 +73,54 @@ export default function Home() {
     }, 'image/jpeg');
   }
 
+  async function startVideo() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Your browser does not support video recording');
+      return;
+    }
+
+    try {
+      setShowVideo(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true,
+        audio: true
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      chunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const videoUrl = URL.createObjectURL(videoBlob);
+        const stream = videoRef.current.srcObject;
+        stream.getTracks().forEach(track => track.stop());
+        setShowVideo(false);
+        router.push(`/feedback?media=video&videoUrl=${videoUrl}`);
+      };
+    } catch (error) {
+      console.error('Error accessing camera/microphone:', error);
+      alert('Error accessing camera/microphone. Please ensure you have granted permission.');
+    }
+  }
+
   function goToFeedback(mediaType) {
     if (mediaType === 'audio') {
       router.push('/audio-record');
     } else if (mediaType === 'photo') {
       startCamera();
+    } else if (mediaType === 'video') {
+      startVideo();
     } else {
       router.push(`/feedback?media=${mediaType}`);
     }
@@ -104,6 +151,55 @@ export default function Home() {
       <button onClick={() => goToFeedback('text')} style={styles.textButton}>
         Add Text Only
       </button>
+
+      {/* Video Recording Modal */}
+      {showVideo && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <h2>{isRecording ? 'Recording Video...' : 'Start Recording'}</h2>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              style={styles.video}
+            />
+            <div style={styles.buttonGroup}>
+              {!isRecording ? (
+                <button 
+                  onClick={() => {
+                    setIsRecording(true);
+                    mediaRecorderRef.current.start();
+                  }}
+                  style={styles.captureButton}
+                >
+                  Start Recording
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setIsRecording(false);
+                    mediaRecorderRef.current.stop();
+                  }}
+                  style={{...styles.captureButton, backgroundColor: '#ff4444'}}
+                >
+                  Stop Recording
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  const stream = videoRef.current.srcObject;
+                  stream.getTracks().forEach(track => track.stop());
+                  setShowVideo(false);
+                  setIsRecording(false);
+                }}
+                style={styles.closeButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Camera Modal */}
       {showCamera && (
