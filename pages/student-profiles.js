@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SkillWheel from './components/SkillWheel';
 import { useRouter } from 'next/router';
 import { supabase } from '../utils/supabase';
 
@@ -152,7 +153,12 @@ const StudentFeedback = ({ feedback }) => {
 
         {selectedStudent && (
           <div style={styles.feedbackList}>
-            <h2>{selectedStudent.first_name}'s Feedback History</h2>
+            <h2>{selectedStudent.first_name}'s Learning Profile</h2>
+            <SkillWheel 
+              studentId={selectedStudent.user_id}
+              feedbackData={feedbackData[selectedStudent.user_id]}
+            />
+            <h3 style={styles.feedbackHistoryTitle}>Feedback History</h3>
             {feedbackData[selectedStudent.user_id]?.length > 0 ? (
               feedbackData[selectedStudent.user_id].map((feedback) => (
                 <StudentFeedback key={feedback.feedback_id} feedback={feedback} />
@@ -168,6 +174,10 @@ const StudentFeedback = ({ feedback }) => {
 }
 
 const styles = {
+  feedbackHistoryTitle: {
+    marginTop: '2rem',
+    marginBottom: '1rem',
+  },
   container: {
     padding: '2rem',
     maxWidth: '1200px',
