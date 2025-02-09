@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 
 export default function Home() {
   const [notification, setNotification] = useState('');
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,8 +22,17 @@ export default function Home() {
   function goToFeedback(mediaType) {
     if (mediaType === 'audio') {
       router.push('/audio-record');
+    } else if (mediaType === 'photo') {
+      setShowImageUpload(true);
     } else {
       router.push(`/feedback?media=${mediaType}`);
+    }
+  }
+
+  function handleImageUpload(e) {
+    if (e.target.files?.[0]) {
+      setSelectedImage(e.target.files[0]);
+      router.push('/feedback?media=photo');
     }
   }
 
@@ -50,12 +61,65 @@ export default function Home() {
       <button onClick={() => goToFeedback('text')} style={styles.textButton}>
         Add Text Only
       </button>
+
+      {/* Image Upload Modal */}
+      {showImageUpload && (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <h2>Upload Image</h2>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={styles.fileInput}
+            />
+            <button 
+              onClick={() => setShowImageUpload(false)}
+              style={styles.closeButton}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Inline styles for quick prototyping:
 const styles = {
+  modal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '8px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    alignItems: 'center',
+  },
+  fileInput: {
+    margin: '1rem 0',
+  },
+  closeButton: {
+    padding: '0.5rem 1rem',
+    cursor: 'pointer',
+    backgroundColor: '#ff4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',
