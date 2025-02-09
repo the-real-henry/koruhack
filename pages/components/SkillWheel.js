@@ -29,9 +29,9 @@ const SkillWheel = ({ studentId, feedbackData }) => {
       
       // Process feedback using proper skill mapping
       feedbackData.forEach(feedback => {
-        const skillIndex = Object.keys(skillMap).indexOf(feedback.skill_id.toString());
-        if (skillIndex !== -1) {
-          skillPoints[skillIndex] += points[feedback.rating];
+        const skillIndex = feedback.skill_id - 1; // skill_ids are 1-based
+        if (skillIndex >= 0 && skillIndex < skills.length) {
+          skillPoints[skillIndex] += points[feedback.rating] || 0;
           skillPoints[skillIndex] = Math.max(1, Math.min(5, skillPoints[skillIndex]));
         }
       });

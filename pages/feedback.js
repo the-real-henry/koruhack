@@ -385,11 +385,15 @@ export async function getServerSideProps() {
     console.error("Error fetching students:", studentError);
   }
 
-  // Skills
-  const { data: skills, error: skillError } = await supabase
-    .from("skill")
-    .select("*")
-    .order("name");
+  // Define fixed skills to match SkillWheel
+  const skills = [
+    { skill_id: 1, name: 'Collaboration' },
+    { skill_id: 2, name: 'Organization' },
+    { skill_id: 3, name: 'Independence' },
+    { skill_id: 4, name: 'Communication' },
+    { skill_id: 5, name: 'Leadership' },
+    { skill_id: 6, name: 'Creativity' }
+  ];
 
   if (skillError) {
     console.error("Error fetching skills:", skillError);
