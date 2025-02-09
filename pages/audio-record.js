@@ -55,6 +55,7 @@ export default function AudioRecord() {
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
             sessionStorage.setItem('audioRecording', reader.result);
+            sessionStorage.setItem('audioTranscription', transcription);
           };
         }
       };

@@ -9,6 +9,16 @@ export default function Feedback({ students = [], skills = [] }) {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [storedAudioUrl, setStoredAudioUrl] = useState(null);
+  const [audioTranscription, setAudioTranscription] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const transcription = sessionStorage.getItem('audioTranscription');
+      if (transcription) {
+        setAudioTranscription(transcription);
+      }
+    }
+  }, []);
   const router = useRouter();
 
   // New useEffect to check and pre-upload an audio recording if one exists in sessionStorage.
