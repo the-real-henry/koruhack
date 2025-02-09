@@ -50,12 +50,10 @@ export default function StudentProfiles() {
               <source src={feedback.file_url} type="audio/mpeg" />
               Your browser does not support the audio element.
             </audio>
-            {feedback.transcription && (
-              <div style={styles.transcription}>
-                <h4>Transcription:</h4>
-                <p>{feedback.transcription}</p>
-              </div>
-            )}
+            <div style={styles.transcription}>
+              <h4>Transcription:</h4>
+              <p>{feedback.speech_transcription || 'No transcription available'}</p>
+            </div>
           </div>
         )}
         
