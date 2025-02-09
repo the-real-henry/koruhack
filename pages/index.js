@@ -20,13 +20,33 @@ export default function Home() {
 
   // Navigate to appropriate page based on media type
   async function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Your browser does not support camera access');
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      setShowCamera(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          setShowCamera(true);
+        };
+      }
     } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Error accessing camera. Please ensure you have granted permission.');
+      if (error.name === 'NotAllowedError') {
+        alert('Camera access was denied. Please allow camera access to use this feature.');
+      } else if (error.name === 'NotFoundError') {
+        alert('No camera device was found on your system.');
+      } else {
+        alert('Error accessing camera: ' + error.message);
+      }
+      console.error('Camera error:', error);
     }
   }
 
