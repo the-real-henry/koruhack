@@ -4,8 +4,8 @@ import { useRouter } from 'next/router';
 
 export default function Home() {
   const [notification, setNotification] = useState('');
-  const [showImageUpload, setShowImageUpload] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,20 +19,40 @@ export default function Home() {
   }, [notification, router]);
 
   // Navigate to appropriate page based on media type
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
+      setShowCamera(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Error accessing camera. Please ensure you have granted permission.');
+    }
+  }
+
+  function capturePhoto() {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      const imageUrl = URL.createObjectURL(blob);
+      // Stop the camera stream
+      const stream = videoRef.current.srcObject;
+      stream.getTracks().forEach(track => track.stop());
+      setShowCamera(false);
+      router.push(`/feedback?media=photo&imageUrl=${imageUrl}`);
+    }, 'image/jpeg');
+  }
+
   function goToFeedback(mediaType) {
     if (mediaType === 'audio') {
       router.push('/audio-record');
     } else if (mediaType === 'photo') {
-      setShowImageUpload(true);
+      startCamera();
     } else {
       router.push(`/feedback?media=${mediaType}`);
-    }
-  }
-
-  function handleImageUpload(e) {
-    if (e.target.files?.[0]) {
-      setSelectedImage(e.target.files[0]);
-      router.push('/feedback?media=photo');
     }
   }
 
@@ -62,23 +82,35 @@ export default function Home() {
         Add Text Only
       </button>
 
-      {/* Image Upload Modal */}
-      {showImageUpload && (
+      {/* Camera Modal */}
+      {showCamera && (
         <div style={styles.modal}>
           <div style={styles.modalContent}>
-            <h2>Upload Image</h2>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              style={styles.fileInput}
+            <h2>Take Photo</h2>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              style={styles.video}
             />
-            <button 
-              onClick={() => setShowImageUpload(false)}
-              style={styles.closeButton}
-            >
-              Cancel
-            </button>
+            <div style={styles.buttonGroup}>
+              <button 
+                onClick={capturePhoto}
+                style={styles.captureButton}
+              >
+                Capture
+              </button>
+              <button 
+                onClick={() => {
+                  const stream = videoRef.current.srcObject;
+                  stream.getTracks().forEach(track => track.stop());
+                  setShowCamera(false);
+                }}
+                style={styles.closeButton}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -111,6 +143,24 @@ const styles = {
   },
   fileInput: {
     margin: '1rem 0',
+  },
+  video: {
+    width: '100%',
+    maxWidth: '500px',
+    borderRadius: '8px',
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: '1rem',
+    marginTop: '1rem',
+  },
+  captureButton: {
+    padding: '0.5rem 1rem',
+    cursor: 'pointer',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
   },
   closeButton: {
     padding: '0.5rem 1rem',
