@@ -54,8 +54,9 @@ export default function AudioRecord() {
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = () => {
+            const finalTranscription = transcription || 'No transcription available';
             sessionStorage.setItem('audioRecording', reader.result);
-            sessionStorage.setItem('audioTranscription', transcription);
+            sessionStorage.setItem('audioTranscription', finalTranscription);
           };
         }
       };
