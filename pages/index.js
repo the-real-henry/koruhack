@@ -26,18 +26,21 @@ export default function Home() {
     }
 
     try {
+      setShowCamera(true); // Show the modal first
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 }
         } 
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          setShowCamera(true);
-        };
-      }
+      
+      // Wait for next render to ensure video element exists
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 100);
     } catch (error) {
       if (error.name === 'NotAllowedError') {
         alert('Camera access was denied. Please allow camera access to use this feature.');
