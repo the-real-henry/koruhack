@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../utils/supabase';
@@ -34,7 +33,7 @@ export default function StudentProfiles() {
 
   const StudentFeedback = ({ feedback }) => {
     const date = new Date(feedback.created_at).toLocaleDateString();
-    
+
     return (
       <div style={styles.feedbackCard}>
         <div style={styles.feedbackHeader}>
@@ -42,7 +41,7 @@ export default function StudentProfiles() {
           <span style={styles.rating}>Rating: {feedback.rating}</span>
         </div>
         <p style={styles.textNote}>{feedback.text_note}</p>
-        
+
         {feedback.file_url && feedback.file_url.includes('.mp3') && (
           <div style={styles.mediaContainer}>
             <h4>Audio Evidence:</h4>
@@ -52,18 +51,18 @@ export default function StudentProfiles() {
             </audio>
             <div style={styles.transcription}>
               <h4>Transcription:</h4>
-              <p>{feedback.transcription || 'No transcription available'}</p>
+              <p>{feedback.transcription ? feedback.transcription : 'No transcription available'}</p>
             </div>
           </div>
         )}
-        
+
         {feedback.file_url && feedback.file_url.includes('.jpg') && (
           <div style={styles.mediaContainer}>
             <h4>Photo Evidence:</h4>
             <img src={feedback.file_url} alt="Evidence" style={styles.image} />
           </div>
         )}
-        
+
         {feedback.file_url && feedback.file_url.includes('.webm') && (
           <div style={styles.mediaContainer}>
             <h4>Video Evidence:</h4>
@@ -85,7 +84,7 @@ export default function StudentProfiles() {
       >
         Back to Start Screen
       </button>
-      
+
       <div style={styles.layout}>
         <div style={styles.studentList}>
           <h2>Class Learner Profiles</h2>
