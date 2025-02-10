@@ -162,7 +162,12 @@ const StudentFeedback = ({ feedback }) => {
 
         {selectedStudent && (
           <div style={styles.feedbackList}>
-            <h2>{selectedStudent.first_name}'s Learning Profile</h2>
+            <div style={styles.profileHeader}>
+              <h2>{selectedStudent.first_name}'s Learning Profile</h2>
+              <button style={styles.generateButton}>
+                Generate Report Card Comments
+              </button>
+            </div>
             <SkillWheel 
               studentId={selectedStudent.user_id}
               feedbackData={feedbackData[selectedStudent.user_id]}
@@ -183,6 +188,22 @@ const StudentFeedback = ({ feedback }) => {
 }
 
 const styles = {
+  profileHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem'
+  },
+  generateButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    fontWeight: 'bold'
+  },
   feedbackHistoryTitle: {
     marginTop: '2rem',
     marginBottom: '1rem',
