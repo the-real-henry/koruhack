@@ -37,7 +37,7 @@ export default function ReportCardComments() {
       ).join('\n\n');
 
       const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: "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", // Replace with your actual OpenAI API key
       });
 
       console.log('Making OpenAI request with API key:', process.env.NEXT_PUBLIC_OPENAI_API_KEY ? 'Key exists' : 'No key found');
