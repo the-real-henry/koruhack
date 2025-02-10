@@ -91,7 +91,7 @@ export default function AudioRecord() {
   // Auto-start recording on mount
   useEffect(() => {
     startRecording();
-  }, [startRecording]);
+  }, []);
 
   return (
     <div style={styles.container}>

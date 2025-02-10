@@ -11,7 +11,7 @@ export default function ReportCardComments() {
     if (studentId) {
       generateComments();
     }
-  }, [studentId]);
+  }, [studentId, generateComments]);
 
   const generateComments = async () => {
     try {

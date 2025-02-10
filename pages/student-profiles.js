@@ -17,7 +17,7 @@ export default function StudentProfiles() {
     if (selectedStudent) {
       fetchFeedbackData(selectedStudent);
     }
-  }, [selectedStudent]);
+  }, [selectedStudent, fetchFeedbackData]);
 
   const fetchStudents = async () => {
     const { data: studentsData } = await supabase
