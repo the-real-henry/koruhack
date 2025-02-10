@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 export default function ReportCardComments() {
@@ -7,13 +8,7 @@ export default function ReportCardComments() {
   const router = useRouter();
   const { studentId } = router.query;
 
-  useEffect(() => {
-    if (studentId) {
-      generateComments();
-    }
-  }, [studentId, generateComments]);
-
-  const generateComments = async () => {
+  const generateComments = useCallback(async () => {
     try {
       const response = await fetch('/api/generate-comments', {
         method: 'POST',
@@ -35,7 +30,13 @@ export default function ReportCardComments() {
       setComments('Error generating comments. Please try again.');
     }
     setLoading(false);
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (studentId) {
+      generateComments();
+    }
+  }, [studentId, generateComments]);
 
   return (
     <div style={styles.container}>
