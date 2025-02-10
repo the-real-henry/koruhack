@@ -42,54 +42,54 @@ export default function StudentProfiles() {
   };
 
   const TranscriptionSection = ({ feedback }) => {
-  const [transcription, setTranscription] = useState(feedback.transcription);
-  const [isLoading, setIsLoading] = useState(false);
+    const [transcription, setTranscription] = useState(feedback.transcription);
+    const [isLoading, setIsLoading] = useState(false);
 
-  const getTranscription = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: JSON.stringify({ audioUrl: feedback.file_url }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await response.json();
-      
-      if (data.text) {
-        setTranscription(data.text);
-        // Update the transcription in the database
-        await supabase
-          .from('feedback')
-          .update({ transcription: data.text })
-          .eq('feedback_id', feedback.feedback_id);
+    const getTranscription = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: JSON.stringify({ audioUrl: feedback.file_url }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.text) {
+          setTranscription(data.text);
+          // Update the transcription in the database
+          await supabase
+            .from('feedback')
+            .update({ transcription: data.text })
+            .eq('feedback_id', feedback.feedback_id);
+        }
+      } catch (error) {
+        console.error('Error getting transcription:', error);
       }
-    } catch (error) {
-      console.error('Error getting transcription:', error);
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    return (
+      <div>
+        {transcription ? (
+          <p>{transcription}</p>
+        ) : (
+          <div>
+            <p>No transcription available</p>
+            <button 
+              onClick={getTranscription}
+              style={styles.transcribeButton}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Transcribing...' : 'Get Transcription'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
-  return (
-    <div>
-      {transcription ? (
-        <p>{transcription}</p>
-      ) : (
-        <div>
-          <p>No transcription available</p>
-          <button 
-            onClick={getTranscription}
-            style={styles.transcribeButton}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Transcribing...' : 'Get Transcription'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const StudentFeedback = ({ feedback }) => {
+  const StudentFeedback = ({ feedback }) => {
     const date = new Date(feedback.created_at).toLocaleDateString();
 
     return (
