@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     fs.writeFileSync(tempFilePath, buffer);
 
     const openai = new OpenAI({
-      apiKey: "YOUR-OPENAI-API-KEY-HERE", // Replace with your actual OpenAI API key
+      apiKey: process.env.OPENAI_API_KEY
     });
 
     console.log('Processing audio file:', tempFilePath);
