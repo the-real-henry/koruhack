@@ -40,6 +40,8 @@ export default function ReportCardComments() {
         apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
       });
 
+      console.log('Making OpenAI request with API key:', process.env.NEXT_PUBLIC_OPENAI_API_KEY ? 'Key exists' : 'No key found');
+      
       const completion = await openai.chat.completions.create({
         messages: [
           {
@@ -54,9 +56,15 @@ export default function ReportCardComments() {
         model: "gpt-4",
       });
 
+      console.log('OpenAI response:', completion);
       setComments(completion.choices[0].message.content);
     } catch (error) {
       console.error('Error generating comments:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       setComments('Error generating comments. Please try again.');
     }
     setLoading(false);
