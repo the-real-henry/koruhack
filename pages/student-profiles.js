@@ -164,7 +164,10 @@ const StudentFeedback = ({ feedback }) => {
           <div style={styles.feedbackList}>
             <div style={styles.profileHeader}>
               <h2>{selectedStudent.first_name}'s Learning Profile</h2>
-              <button style={styles.generateButton}>
+              <button 
+                style={styles.generateButton}
+                onClick={() => router.push(`/report-card-comments?studentId=${selectedStudent.user_id}`)}
+              >
                 Generate Report Card Comments
               </button>
             </div>
