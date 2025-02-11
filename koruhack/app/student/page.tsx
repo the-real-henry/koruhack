@@ -1,0 +1,1 @@
+// The entire student page interface. Preferably using server side rendering.
