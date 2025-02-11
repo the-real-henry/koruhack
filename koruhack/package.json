@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.1.9",
     "@phosphor-icons/react": "^2.1.7",
+    "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-slot": "^1.1.2",
     "@supabase/supabase-js": "^2.48.1",
     "ai": "^4.1.34",

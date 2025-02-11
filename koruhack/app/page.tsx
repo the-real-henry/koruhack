@@ -7,7 +7,7 @@ export default function Home() {
           Create a new class with the button below
         </span>
       </div>
-      
+      {/* 3 Create Class Tabs in a row*/}
     </main>
   );
 }

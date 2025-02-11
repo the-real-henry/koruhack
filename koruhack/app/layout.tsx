@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cherry_Bomb_One, Poppins } from "next/font/google";
 import "./globals.css";
 import Topbar from "@/components/block/Topbar";
+import { BottomBar } from "@/components/block/BottomBar";
 
 // If loading a variable font, you don't need to specify the font weight
 const poppins = Poppins({
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <Topbar />
         {children}
+        <BottomBar />
       </body>
     </html>
   );
